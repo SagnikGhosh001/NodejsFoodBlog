@@ -19,6 +19,8 @@ app.use(express.json());
 app.use('/api/users', require("./routes/userRoutes"));
 app.use('/api/blogs',require("./routes/blogRoutes"))
 app.use('/api/infos',require('./routes/infoRoutes'))
+app.use('/api/feedbacks',require("./routes/feedbackRoutes"))
+
 
 // Error Handler Middleware
 app.use(errorHandler);
