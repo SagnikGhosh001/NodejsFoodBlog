@@ -11,7 +11,8 @@ const {
     updatepassword,
     forgetpassword,
     login,
-    uploadProfileImage
+    uploadProfileImage,
+    registeradmin
 } = require('../controllers/userController');
 const multer = require('multer');
 const path = require('path');
@@ -37,6 +38,7 @@ router.get("/home",(req,res)=>{
     return res.json("ok...routes are working");
 })
 router.post("/registerUser",registerUser)
+router.post("/registerAdmin",registeradmin)
 router.get("/getall",getAllUsers)
 router.get("/getbyid/:id",getUserById)
 router.post("/verifyemail",verifyuseremail)

@@ -169,21 +169,39 @@ const uploadInfoImage =asynchandler( async (req, res) => {
         return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    try {           
-        const infoId = req.params.id       
+
+    
+        const {userId}=req.body
+
+        
+        if(!userId){
+            res.status(400)
+            throw new Error("provide user id")
+        }           
+
+        const infoId = req.params.id
+  
+        const user=await userSchema.findById(userId)
+
+        if(!userId){
+            res.status(404)
+            throw new Error(`user not found with id${userId}`)
+        }
+ 
+        if(user.role!=="admin") {
+            res.status(404)
+            throw new Error("your role should be admin")
+        }     
         const info = await infoSchema.findById(infoId);
         if (!info) {
-            res.status(404)
-            throw new Error(`info not found with id${infoId}`)
-        }     
+            res.status(400)
+            throw new Error(`info not found with id ${infoId}`)
+        }    
         info.image = `/uploads/infoimages/${req.file.filename}`;
         await info.save();
         res.status(200).json({
             message: 'info image uploaded successfully',
             image: info.image
         });
-    } catch (error) {
-        res.status(500).json({ message: 'An error occurred', error });
-    }
 });
 module.exports = { getallinfo, getinfobyid, getinfobyparentid, addinfo,updateinfo,deletebyid ,deleteall,uploadInfoImage}

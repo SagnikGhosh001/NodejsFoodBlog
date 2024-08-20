@@ -52,13 +52,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
     const otpExpiryTime = await new Date(Date.now() + 15 * 60 * 1000);
-    console.log(otpExpiryTime);
+
 
     const hashedpassword = await bcrypt.hash(password, 10);
-    console.log(hashedpassword);
+    
 
     const generatedotp = generateOtp()
-    console.log(generatedotp);
+    
 
 
 
@@ -71,8 +71,8 @@ const registerUser = asyncHandler(async (req, res) => {
         otp: generatedotp,
         otpExpiry: otpExpiryTime,
         isEmailVerfied: false,
-        isEmailOtpUsed: false,
-        role,
+        isEmailOtpUsed: false
+        
     })
     if (createUser) {
         res.status(201).json({
@@ -148,6 +148,54 @@ const sendotp = asyncHandler(async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 })
+
+const registeradmin=asyncHandler(async(req,res)=>{
+    const { username, email, password, name, gender } = req.body
+    if (!username || !email || !password || !name || !gender) {
+        res.status(400)
+        throw new Error("please enter all fiend")
+    }
+
+    const userByEmail = await userSchema.findOne({ email })
+
+    const userByUsername = await userSchema.findOne({ username })
+
+    if (userByEmail) {
+        res.status(400)
+        throw new Error(`user already available with ${email}`)
+    }
+    if (userByUsername) {
+        res.status(400)
+        throw new Error(`user already available with ${username}`)
+    }
+
+    const hashedpassword = await bcrypt.hash(password, 10);
+    
+    const createUser = await userSchema.create({
+        username,
+        email,
+        password: hashedpassword,
+        name,
+        gender,
+        isEmailVerfied: true,
+        role:"admin"
+        
+    })
+    if (createUser) {
+        res.status(201).json({
+            __id: createUser.id,
+            email: createUser.email,
+            name: createUser.name,
+            gender: createUser.gender,
+        })
+    }
+    else {
+        res.status(400)
+        throw new Error("invalid data")
+    }
+    res.json({ message: "user register" })
+})
+
 
 const updateuser = asyncHandler(async (req, res) => {
     const { name, gender, userid } = req.body
@@ -364,8 +412,14 @@ const login = asyncHandler(async (req, res) => {
         throw new Error("All fields are mandatory");
     }
 
-    const loginUser = await userSchema.findOne({ email });
-    if (loginUser && (await bcrypt.compare(password, loginUser.password && loginUser.isEmailVerfied))) {
+    
+    const loginUser = await userSchema.findOne({email: email });
+    if(!loginUser.isEmailVerfied){
+        res.status(500);
+        throw new Error("verify your email first");
+    }
+    
+    if (loginUser && (await bcrypt.compare(password, loginUser.password) && loginUser.isEmailVerfied)) {
         res.status(200).json(loginUser)
     } else {
         res.status(500);
@@ -378,24 +432,33 @@ const uploadProfileImage =asyncHandler( async (req, res) => {
     
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    try {           
-        const userId = req.params.id       
-        const user = await userSchema.findById(userId);
+    }       
+        const {userId} = req.body
+        
+        if(!userId){
+            res.status(400)
+            throw new Error("provide userId")
+        }   
+                
+        if(userId!=req.params.id){
+            res.status(400)
+            throw new Error("you are not allowed")   
+        }  
+             
+        const user = await userSchema.findById( req.params.id );
+        
         if (!user) {
             res.status(404)
-            throw new Error(`user not found with id${userId}`)
+            throw new Error(`user not found with id ${req.params.id}`)
         }     
+       
         user.prfileImageUrl = `/uploads/userimages/${req.file.filename}`;
         await user.save();
         res.status(200).json({
             message: 'Profile image uploaded successfully',
             profileImageUrl: user.prfileImageUrl
         });
-    } catch (error) {
-        res.status(500).json({ message: 'An error occurred', error });
-    }
+    
 });
 
 
@@ -414,5 +477,6 @@ module.exports = {
     updatepassword,
     forgetpassword,
     login,
-    uploadProfileImage
+    uploadProfileImage,
+    registeradmin
 }

@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const blogSchema = require("../models/blogModel.js")
 const userSchema = require('../models/userModel')
-const mongoose=require("mongoose")
+const mongoose = require("mongoose")
 const getAllBlogs = asyncHandler(async (req, res) => {
     try {
         const blogs = await blogSchema.find()
@@ -77,16 +77,16 @@ const updateblog = asyncHandler(async (req, res) => {
         blog.description = description
         await blog.save()
         res.status(200).json(blog)
-    }else{
+    } else {
         res.status(400)
         throw new Error("you are not owner of this blog")
     }
 
 })
 
-const deleteById= asyncHandler(async(req,res)=>{
-    const{userId}=req.body
-    if(!userId){
+const deleteById = asyncHandler(async (req, res) => {
+    const { userId } = req.body
+    if (!userId) {
         res.status(400)
         throw new Error("provide user id")
     }
@@ -94,48 +94,54 @@ const deleteById= asyncHandler(async(req,res)=>{
         res.status(400);
         throw new Error("Invalid user ID format,use valid id format");
     }
-    const user=await userSchema.findById(userId)
-   
-    
-    
-    if(!user){
+    const user = await userSchema.findById(userId)
+
+
+
+    if (!user) {
         res.status(404)
         throw new Error(`no user found with id: ${userId}`)
     }
-    const blog=await blogSchema.findById(req.params.id)
-    if(!blog){
+    const blog = await blogSchema.findById(req.params.id)
+    if (!blog) {
         res.status(404)
         throw new Error(`no blog found with id: ${req.params.id}`)
     }
-    if(user.role==="admin" || userId==blog.userId){
+    if (user.role === "admin" || userId == blog.userId) {
         await blogSchema.findByIdAndDelete(req.params.id)
         res.status(200).json(blog)
-    }else{
+    } else {
         res.status(400)
         throw new Error("you are not allowed")
     }
 })
-const uploadBlogImage =asyncHandler( async (req, res) => {
-    
+const uploadBlogImage = asyncHandler(async (req, res) => {
+
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
-
-    try {           
-        const blogId = req.params.id       
-        const blog = await blogSchema.findById(blogId);
-        if (!blog) {
-            res.status(404)
-            throw new Error(`blog not found with id${blogId}`)
-        }     
-        blog.image = `/uploads/blogimages/${req.file.filename}`;
-        await blog.save();
-        res.status(200).json({
-            message: 'info image uploaded successfully',
-            image: blog.image
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'An error occurred', error });
+    const {userId} =req.body
+    if(!userId){
+        res.status(400)
+        throw new Error("provide userid")
     }
+    const blogId = req.params.id
+
+    const blog = await blogSchema.findById(blogId);
+    if(userId!=blog.userId){
+        res.status(400)
+        throw new Error("you are not allowed")
+    }
+    if (!blog) {
+        res.status(404)
+        throw new Error(`blog not found with id${blogId}`)
+    }
+    blog.image = `/uploads/blogimages/${req.file.filename}`;
+    await blog.save();
+    res.status(200).json({
+        message: 'info image uploaded successfully',
+        image: blog.image
+    });
+
 });
-module.exports = { getAllBlogs, getBlogsById, getBlogsByUserId, addBlogs, updateblog,deleteById,uploadBlogImage }
+module.exports = { getAllBlogs, getBlogsById, getBlogsByUserId, addBlogs, updateblog, deleteById, uploadBlogImage }
