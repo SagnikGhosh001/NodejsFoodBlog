@@ -40,8 +40,7 @@ const userSchema = mongoose.Schema({
         type: Boolean,
     },
     prfileImageUrl: {
-        type: String,
-        default: '../public/images/pngtree-blue-default-avatar-png-image_2813123.jpg',
+        type: String
     },
     role: {
         type: String,

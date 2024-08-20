@@ -115,5 +115,27 @@ const deleteById= asyncHandler(async(req,res)=>{
         throw new Error("you are not allowed")
     }
 })
+const uploadBlogImage =asyncHandler( async (req, res) => {
+    
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
 
-module.exports = { getAllBlogs, getBlogsById, getBlogsByUserId, addBlogs, updateblog,deleteById }
+    try {           
+        const blogId = req.params.id       
+        const blog = await blogSchema.findById(blogId);
+        if (!blog) {
+            res.status(404)
+            throw new Error(`blog not found with id${blogId}`)
+        }     
+        blog.image = `/uploads/blogimages/${req.file.filename}`;
+        await blog.save();
+        res.status(200).json({
+            message: 'info image uploaded successfully',
+            image: blog.image
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'An error occurred', error });
+    }
+});
+module.exports = { getAllBlogs, getBlogsById, getBlogsByUserId, addBlogs, updateblog,deleteById,uploadBlogImage }

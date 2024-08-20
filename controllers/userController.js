@@ -3,6 +3,7 @@ const asyncHandler = require("express-async-handler")
 const bcrypt = require("bcrypt")
 const userSchema = require("../models/userModel.js");
 const generateOtp = require('../otpHelper/generateOtp.js');
+const path = require('path');
 const getAllUsers = asyncHandler(async (req, res) => {
     try {
         const users = await userSchema.find();
@@ -373,6 +374,33 @@ const login = asyncHandler(async (req, res) => {
 })
 
 
+const uploadProfileImage =asyncHandler( async (req, res) => {
+    
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    try {           
+        const userId = req.params.id       
+        const user = await userSchema.findById(userId);
+        if (!user) {
+            res.status(404)
+            throw new Error(`user not found with id${userId}`)
+        }     
+        user.prfileImageUrl = `/uploads/userimages/${req.file.filename}`;
+        await user.save();
+        res.status(200).json({
+            message: 'Profile image uploaded successfully',
+            profileImageUrl: user.prfileImageUrl
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'An error occurred', error });
+    }
+});
+
+
+
+
 module.exports = {
     registerUser,
     getUserById,
@@ -385,5 +413,6 @@ module.exports = {
     updateuserusername,
     updatepassword,
     forgetpassword,
-    login
+    login,
+    uploadProfileImage
 }
