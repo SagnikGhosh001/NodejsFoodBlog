@@ -2,6 +2,7 @@ const { Router } = require("express");
 const{getallinfo,getinfobyid,getinfobyparentid,addinfo,updateinfo,deletebyid,deleteall, uploadInfoImage}=require('../controllers/infoController');
 const multer = require("multer");
 const path = require('path');
+const  validtoken= require('../middleware/validToken');
 const router=Router()
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {        
@@ -13,6 +14,7 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
+router.use(validtoken)
 router.get('/allinfo',getallinfo)
 router.get('/infobyid/:id',getinfobyid)
 router.get('/infobyparentid/:id',getinfobyparentid)

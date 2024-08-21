@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt")
 const userSchema = require("../models/userModel.js");
 const generateOtp = require('../otpHelper/generateOtp.js');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const { JsonWebTokenError } = require("jsonwebtoken")
 const getAllUsers = asyncHandler(async (req, res) => {
     try {
         const users = await userSchema.find();
@@ -410,17 +412,40 @@ const login = asyncHandler(async (req, res) => {
     if (!email || !password) {
         res.status(400);
         throw new Error("All fields are mandatory");
-    }
-
-    
+    } 
     const loginUser = await userSchema.findOne({email: email });
+    if(!loginUser){
+        res.status(500);
+        throw new Error(`wrong email no data found ${email}`);
+    }
+    
     if(!loginUser.isEmailVerfied){
         res.status(500);
         throw new Error("verify your email first");
     }
     
     if (loginUser && (await bcrypt.compare(password, loginUser.password) && loginUser.isEmailVerfied)) {
-        res.status(200).json(loginUser)
+        
+        
+        const accessToken = jwt.sign({
+            loginUser: {
+                username: loginUser.username,
+                email: loginUser.email,
+                id: loginUser._id,
+                name:loginUser.name,
+                gender:loginUser.gender,
+                otp:loginUser.otp,
+                otpExpiry:loginUser.otpExpiry,
+                isEmailVerfied:loginUser.isEmailVerfied,
+                isEmailOtpUsed:loginUser.isEmailOtpUsed,
+                prfileImageUrl:loginUser.profileImageUrl,
+                role:loginUser.role
+               
+            },
+        }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '60m' });
+        // res.status(200).json(loginUser)
+        res.status(200).json({ accessToken,user:loginUser });
+     
     } else {
         res.status(500);
         throw new Error("Email or password not valid");

@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const {getAllBlogs,getBlogsById,getBlogsByUserId,addBlogs,updateblog,deleteById, uploadBlogImage} = require('../controllers/blogController');
-
+const  validtoken= require('../middleware/validToken');
 const router=Router()
 const multer = require('multer');
 const path = require('path');
@@ -17,6 +17,8 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+router.use(validtoken)
 router.get('/allblog',getAllBlogs)
 router.get('/blogbyid/:id',getBlogsById)
 router.get('/blogbyuserid/:id',getBlogsByUserId)
